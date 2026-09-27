@@ -279,6 +279,14 @@ function ultimosNMeses(n) {
   return meses;
 }
 
+function avisoSinGraficos(idOriginal) {
+  const p = document.createElement('p');
+  p.className = 'empty-note';
+  p.id = idOriginal;
+  p.textContent = 'No se pudieron cargar los gráficos (sin conexión a internet). El resto del panel funciona igual.';
+  return p;
+}
+
 function nombreMes(ym) {
   const [y, m] = ym.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
@@ -286,6 +294,12 @@ function nombreMes(ym) {
 }
 
 function renderChartEvolucion() {
+  const ctxPrevio = document.getElementById('chart-evolucion');
+  if (typeof Chart === 'undefined') {
+    ctxPrevio.replaceWith(avisoSinGraficos('chart-evolucion'));
+    return;
+  }
+
   const meses = ultimosNMeses(6);
   const ingresosPorMes = meses.map((ym) =>
     movimientos.filter((m) => m.tipo === 'ingreso' && m.fecha.slice(0, 7) === ym)
@@ -325,6 +339,12 @@ function renderChartEvolucion() {
 const COLORES_CATEGORIA = ['#D2A857', '#86BF93', '#E08770', '#7FA6BF', '#B08FD0', '#C9C0A8', '#6E8E7C'];
 
 function renderChartCategorias() {
+  const ctxPrevio = document.getElementById('chart-categorias');
+  if (typeof Chart === 'undefined') {
+    if (ctxPrevio) ctxPrevio.replaceWith(avisoSinGraficos('chart-categorias'));
+    return;
+  }
+
   const gastos = movimientos.filter((m) => m.tipo === 'gasto');
   const porCategoria = {};
   gastos.forEach((m) => {
