@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel Cash</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 </head>
 <body>
 
   <!-- PANTALLA DE INICIO DE SESIÓN -->
-  <section id="login-screen" class="login-screen">
+  <section id="login-screen" class="screen login-screen">
     <div class="login-card">
       <div class="login-mark">
         <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,7 +38,7 @@
   </section>
 
   <!-- PANEL PRINCIPAL -->
-  <div id="app" class="app" hidden>
+  <div id="app" class="screen app hidden">
 
     <aside class="sidebar">
       <div class="brand">
@@ -55,6 +54,8 @@
         <button class="nav-item is-active" data-view="resumen">Resumen</button>
         <button class="nav-item" data-view="movimientos">Movimientos</button>
         <button class="nav-item" data-view="documentos">Documentos</button>
+        <button class="nav-item" data-view="presupuesto">Presupuesto</button>
+        <button class="nav-item" data-view="simuladores">Simuladores</button>
         <button class="nav-item" data-view="proyeccion">Balance a futuro</button>
       </nav>
 
@@ -95,16 +96,11 @@
         <div class="panel-grid">
           <div class="panel">
             <h3>Evolución mensual</h3>
-            <div class="chart-box">
-              <canvas id="chart-evolucion"></canvas>
-            </div>
+            <div id="chart-evolucion" class="bars-chart"></div>
           </div>
           <div class="panel">
             <h3>Gastos por categoría</h3>
-            <div class="chart-box">
-              <canvas id="chart-categorias"></canvas>
-            </div>
-            <p id="sin-gastos" class="empty-note" hidden>Todavía no cargaste gastos.</p>
+            <div id="chart-categorias" class="donut-chart"></div>
           </div>
         </div>
 
@@ -119,12 +115,13 @@
         <header class="view-header">
           <div>
             <h2>Movimientos</h2>
-            <p class="view-sub">Cargá ingresos y gastos de la empresa.</p>
+            <p class="view-sub">Cargá, editá o eliminá ingresos y gastos de la empresa.</p>
           </div>
         </header>
 
         <div class="panel">
           <form id="movimiento-form" class="inline-form">
+            <input type="hidden" id="mov-editando-id" value="">
             <div class="field">
               <label for="mov-tipo">Tipo</label>
               <select id="mov-tipo" required>
@@ -156,7 +153,14 @@
               <label for="mov-fecha">Fecha</label>
               <input type="date" id="mov-fecha" required>
             </div>
-            <button type="submit" class="btn-primary">Agregar</button>
+            <div class="field field-grow">
+              <label for="mov-nota">Nota (opcional)</label>
+              <input type="text" id="mov-nota" placeholder="Detalle adicional">
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="mov-submit-btn" class="btn-primary">Agregar</button>
+              <button type="button" id="mov-cancelar-btn" class="btn-secondary" hidden>Cancelar edición</button>
+            </div>
           </form>
         </div>
 
@@ -172,6 +176,7 @@
                   <th>Fecha</th>
                   <th>Concepto</th>
                   <th>Categoría</th>
+                  <th>Nota</th>
                   <th>Tipo</th>
                   <th class="col-right">Importe</th>
                   <th></th>
@@ -241,6 +246,58 @@
         </div>
       </section>
 
+      <!-- VISTA: PRESUPUESTO -->
+      <section id="view-presupuesto" class="view">
+        <header class="view-header">
+          <div>
+            <h2>Presupuesto</h2>
+            <p class="view-sub">Distribuí un límite mensual por categoría y respondé a los imprevistos.</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <form id="presupuesto-form" class="inline-form">
+            <div class="field">
+              <label for="pres-categoria">Categoría</label>
+              <select id="pres-categoria" required>
+                <option value="Ventas">Ventas</option>
+                <option value="Servicios">Servicios</option>
+                <option value="Insumos">Insumos</option>
+                <option value="Sueldos">Sueldos</option>
+                <option value="Impuestos">Impuestos</option>
+                <option value="Alquiler">Alquiler</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="pres-monto">Límite mensual</label>
+              <input type="number" id="pres-monto" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+            <button type="submit" class="btn-primary">Guardar límite</button>
+            <button type="button" id="pres-imprevisto-btn" class="btn-secondary">Generar imprevisto</button>
+          </form>
+          <p id="pres-imprevisto-msg" class="empty-note" hidden></p>
+        </div>
+
+        <div class="panel">
+          <h3>Cómo vas este mes</h3>
+          <div id="presupuesto-lista" class="presupuesto-lista"></div>
+          <p id="pres-empty" class="empty-note">Todavía no definiste límites de presupuesto.</p>
+        </div>
+      </section>
+
+      <!-- VISTA: SIMULADORES -->
+      <section id="view-simuladores" class="view">
+        <header class="view-header">
+          <div>
+            <h2>Simuladores</h2>
+            <p class="view-sub">Explorá otras decisiones económicas de la empresa. Se calculan solos al completar los campos.</p>
+          </div>
+        </header>
+
+        <div id="simuladores-grid" class="sim-grid"></div>
+      </section>
+
       <!-- VISTA: PROYECCIÓN -->
       <section id="view-proyeccion" class="view">
         <header class="view-header">
@@ -255,6 +312,10 @@
             Se calcula el promedio de ingresos y gastos mensuales registrados y se proyecta hacia
             adelante, manteniendo ese mismo ritmo. Es una estimación educativa, no una garantía.
           </p>
+          <label class="field field-inline">
+            <span>Inflación mensual estimada (%)</span>
+            <input type="number" id="proy-inflacion" min="0" step="0.5" value="0">
+          </label>
           <p id="proy-sin-datos" class="empty-note">Cargá al menos un mes de movimientos para ver la proyección.</p>
           <div class="proy-grid" id="proy-grid"></div>
         </div>
