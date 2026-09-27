@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Cash</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- PANTALLA DE INICIO DE SESIÓN -->
+  <section id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-mark">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="15.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M17 9.5V24.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M21.2 12.8C21.2 11.1 19.4 10 17 10C14.6 10 12.7 11.2 12.7 13C12.7 14.8 14.3 15.5 17 16C19.7 16.5 21.3 17.3 21.3 19.1C21.3 20.9 19.5 22.1 17 22.1C14.5 22.1 12.7 20.9 12.7 19.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>Panel Cash</h1>
+      <p class="login-sub">Ingresá para ver el estado de tus finanzas.</p>
+
+      <form id="login-form" class="login-form">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="Usuario" required>
+
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Contraseña" required>
+
+        <p id="login-error" class="login-error" hidden>Usuario o contraseña incorrectos.</p>
+
+        <button type="submit" class="btn-primary">Ingresar</button>
+      </form>
+
+      <p class="login-hint">Acceso de prueba — usuario y contraseña: <strong>1111</strong></p>
+    </div>
+  </section>
+
+  <!-- PANEL PRINCIPAL -->
+  <div id="app" class="app" hidden>
+
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="24" height="24" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="15.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M17 9.5V24.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M21.2 12.8C21.2 11.1 19.4 10 17 10C14.6 10 12.7 11.2 12.7 13C12.7 14.8 14.3 15.5 17 16C19.7 16.5 21.3 17.3 21.3 19.1C21.3 20.9 19.5 22.1 17 22.1C14.5 22.1 12.7 20.9 12.7 19.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <span>Panel Cash</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item is-active" data-view="resumen">Resumen</button>
+        <button class="nav-item" data-view="movimientos">Movimientos</button>
+        <button class="nav-item" data-view="documentos">Documentos</button>
+        <button class="nav-item" data-view="proyeccion">Balance a futuro</button>
+      </nav>
+
+      <button id="logout-btn" class="logout-btn">Cerrar sesión</button>
+    </aside>
+
+    <main class="main">
+
+      <!-- VISTA: RESUMEN -->
+      <section id="view-resumen" class="view is-active">
+        <header class="view-header">
+          <div>
+            <h2>Resumen</h2>
+            <p class="view-sub">Así está tu empresa hoy.</p>
+          </div>
+          <div class="today" id="today-label"></div>
+        </header>
+
+        <div class="stat-grid">
+          <div class="stat-card stat-balance">
+            <span class="stat-label">Balance actual</span>
+            <span class="stat-value" id="stat-balance">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Ingresos del mes</span>
+            <span class="stat-value stat-positive" id="stat-ingresos">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Gastos del mes</span>
+            <span class="stat-value stat-negative" id="stat-gastos">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Documentos pendientes</span>
+            <span class="stat-value" id="stat-docs">$0</span>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <h3>Evolución mensual</h3>
+            <div class="chart-box">
+              <canvas id="chart-evolucion"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Gastos por categoría</h3>
+            <div class="chart-box">
+              <canvas id="chart-categorias"></canvas>
+            </div>
+            <p id="sin-gastos" class="empty-note" hidden>Todavía no cargaste gastos.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Últimos movimientos</h3>
+          <div id="ultimos-movimientos" class="mini-list"></div>
+        </div>
+      </section>
+
+      <!-- VISTA: MOVIMIENTOS -->
+      <section id="view-movimientos" class="view">
+        <header class="view-header">
+          <div>
+            <h2>Movimientos</h2>
+            <p class="view-sub">Cargá ingresos y gastos de la empresa.</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <form id="movimiento-form" class="inline-form">
+            <div class="field">
+              <label for="mov-tipo">Tipo</label>
+              <select id="mov-tipo" required>
+                <option value="ingreso">Ingreso</option>
+                <option value="gasto">Gasto</option>
+              </select>
+            </div>
+            <div class="field field-grow">
+              <label for="mov-concepto">Concepto</label>
+              <input type="text" id="mov-concepto" placeholder="Ej: Venta de mercadería" required>
+            </div>
+            <div class="field">
+              <label for="mov-categoria">Categoría</label>
+              <select id="mov-categoria" required>
+                <option value="Ventas">Ventas</option>
+                <option value="Servicios">Servicios</option>
+                <option value="Insumos">Insumos</option>
+                <option value="Sueldos">Sueldos</option>
+                <option value="Impuestos">Impuestos</option>
+                <option value="Alquiler">Alquiler</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mov-importe">Importe</label>
+              <input type="number" id="mov-importe" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="field">
+              <label for="mov-fecha">Fecha</label>
+              <input type="date" id="mov-fecha" required>
+            </div>
+            <button type="submit" class="btn-primary">Agregar</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="table-head">
+            <h3>Historial</h3>
+            <span id="mov-count" class="count-pill">0 movimientos</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Concepto</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th class="col-right">Importe</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="movimientos-body"></tbody>
+            </table>
+            <p id="mov-empty" class="empty-note">Todavía no cargaste movimientos.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA: DOCUMENTOS -->
+      <section id="view-documentos" class="view">
+        <header class="view-header">
+          <div>
+            <h2>Documentos</h2>
+            <p class="view-sub">Registrá el importe de facturas, recibos o comprobantes.</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <form id="documento-form" class="inline-form">
+            <div class="field field-grow">
+              <label for="doc-nombre">Documento</label>
+              <input type="text" id="doc-nombre" placeholder="Ej: Factura A-0001" required>
+            </div>
+            <div class="field">
+              <label for="doc-estado">Estado</label>
+              <select id="doc-estado" required>
+                <option value="pendiente">Pendiente</option>
+                <option value="pagado">Pagado</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="doc-importe">Importe</label>
+              <input type="number" id="doc-importe" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="field">
+              <label for="doc-fecha">Fecha</label>
+              <input type="date" id="doc-fecha" required>
+            </div>
+            <button type="submit" class="btn-primary">Registrar</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="table-head">
+            <h3>Documentos cargados</h3>
+            <span id="doc-count" class="count-pill">0 documentos</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Documento</th>
+                  <th>Estado</th>
+                  <th class="col-right">Importe</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="documentos-body"></tbody>
+            </table>
+            <p id="doc-empty" class="empty-note">Todavía no registraste documentos.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA: PROYECCIÓN -->
+      <section id="view-proyeccion" class="view">
+        <header class="view-header">
+          <div>
+            <h2>Balance a futuro</h2>
+            <p class="view-sub">Proyección simple a partir del promedio de los últimos meses.</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <p class="proy-explicacion">
+            Se calcula el promedio de ingresos y gastos mensuales registrados y se proyecta hacia
+            adelante, manteniendo ese mismo ritmo. Es una estimación educativa, no una garantía.
+          </p>
+          <p id="proy-sin-datos" class="empty-note">Cargá al menos un mes de movimientos para ver la proyección.</p>
+          <div class="proy-grid" id="proy-grid"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
